@@ -2,6 +2,7 @@ package Chess.Pieces;
 
 import Chess.ChessBoard;
 import Chess.GameSquare;
+import javafx.scene.image.ImageView;
 
 public class Knight extends Piece {
 
@@ -17,6 +18,11 @@ public class Knight extends Piece {
     @Override
     public String getColor(){
         return isWhite ? "White" : "Black";
+    }
+
+    @Override 
+    public ImageView getImage() {
+        return PieceImages.getImage(this);
     }
 
     @Override
