@@ -9,8 +9,8 @@ public class Pawn extends Piece {
 
     private boolean hasMoved = false;
 
-    public Pawn(boolean isWhite) {
-        super(isWhite);
+    public Pawn(boolean isWhite, int row, int col) {
+        super(isWhite, row, col);
     }
 
     public String getName() {
@@ -41,27 +41,40 @@ public class Pawn extends Piece {
         int endRow = end.getRow();
         int endCol = end.getCol();
 
-        if (Math.abs(startRow - endRow) > 2 || Math.abs(startCol - endCol) > 1) { // If moving by more than 2x0 or 1x1, return false
-            return false;
+        if (Math.abs(startRow - endRow) > 2 || Math.abs(startCol - endCol) > 1) { // If moving by more than 2x0 or 1x1, exit
+            return false; 
         } else if (hasMoved && Math.abs(startRow - endRow) == 2) { // If already moved, pawns cannot move forward 2
             return false;
         }
+        if (start.equals(end)) {
+            return false;
+        }
 
-        if (isWhite) {
-            if (!hasMoved && (endRow - startRow) == 2) {
+        // As piece capturing and movement depends on the piece colors, branch for white and black
+        if (isWhite) { 
+            if (!hasMoved && (endRow - startRow) == -2 && endCol == startCol) { //Check for moving 2 squares ahead
                 if (board[startRow - 1][startCol].isEmpty() && end.isEmpty()) {
+                    return true;
+                }
+            } else if ((endRow - startRow) == -1) { //Check for moving one square ahead
+                if (endCol == startCol && end.isEmpty()) {
+                    return true;
+                } else if (Math.abs(startCol - endCol) == 1 && end.getPieceColor() == SquareColor.BLACK) { // Check for capturing diagonal right or left
+                    return true;
+                }
+            }
+        } else {
+            if (!hasMoved && (endRow - startRow) == 2 && endCol == startCol) {
+                if (board[startRow + 1][startCol].isEmpty() && end.isEmpty()) {
                     return true;
                 }
             } else if ((endRow - startRow) == 1) {
                 if (endCol == startCol && end.isEmpty()) {
                     return true;
-                } else if (Math.abs(startCol - endCol) == 1 && end.getPieceColor() == SquareColor.BLACK) {
+                } else if (Math.abs(startCol - endCol) == 1 && end.getPieceColor() == SquareColor.WHITE) {
                     return true;
                 }
             }
-
-        } else {
-
         }
         return false;
     }

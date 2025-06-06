@@ -6,8 +6,8 @@ import javafx.scene.image.ImageView;
 
 public class Rook extends Piece {
 
-    public Rook(boolean isWhite) {
-        super(isWhite);
+    public Rook(boolean isWhite, int row, int col) {
+        super(isWhite, row, col);
     }
 
     public String getName() {

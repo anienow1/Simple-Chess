@@ -39,8 +39,6 @@ public final class PieceImages {
             default:
                 System.out.println(pieceType + " is not a valid type.");
         }
-
         return img;
-
     }
 }

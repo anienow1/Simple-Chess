@@ -6,8 +6,8 @@ import javafx.scene.image.ImageView;
 
 public class Bishop extends Piece {
 
-    public Bishop(boolean isWhite) {
-        super(isWhite);
+    public Bishop(boolean isWhite, int row, int col) {
+        super(isWhite, row, col);
     }
 
     public String getName() {
@@ -19,7 +19,7 @@ public class Bishop extends Piece {
         return isWhite ? "White" : "Black";
     }
 
-    @Override 
+    @Override
     public ImageView getImage() {
         return PieceImages.getImage(this);
     }

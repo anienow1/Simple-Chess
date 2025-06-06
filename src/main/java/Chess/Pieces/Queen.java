@@ -6,8 +6,8 @@ import javafx.scene.image.ImageView;
 
 public class Queen extends Piece {
 
-    public Queen(boolean isWhite) {
-        super(isWhite);
+    public Queen(boolean isWhite, int row, int col) {
+        super(isWhite, row, col);
     }
 
     public String getName() {

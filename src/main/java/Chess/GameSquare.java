@@ -5,7 +5,7 @@ import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Rectangle;
 
-public class GameSquare extends StackPane{
+public class GameSquare extends StackPane {
     private final int row;
     private final int col;
 
@@ -30,7 +30,6 @@ public class GameSquare extends StackPane{
         this.col = aCol;
         this.piece = aPiece;
         this.board = board;
-
 
         if (aPiece == null) {
             this.getChildren().addAll(square);
@@ -95,5 +94,9 @@ public class GameSquare extends StackPane{
                 this.square.setFill(Color.rgb(117, 148, 91));
             }
         }
+    }
+
+    public void highlight() {
+        setColorAfterClicked();
     }
 }

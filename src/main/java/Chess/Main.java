@@ -41,7 +41,6 @@ public class Main extends Application {
 
                 square.setOnMouseClicked(event -> {
                     board.squareClicked(square);
-
                 });
 
                 grid.add(square, col, row);
@@ -49,11 +48,14 @@ public class Main extends Application {
         }
 
 
+
         stage.addEventHandler(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
             @Override
             public void handle(KeyEvent event) {
                 if (event.getCode() == KeyCode.ESCAPE) {
                     stage.close();
+                } else if (event.getCode() == KeyCode.Q) {
+                    board.changeTurns();
                 }
             }
         });

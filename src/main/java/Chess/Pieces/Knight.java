@@ -6,8 +6,8 @@ import javafx.scene.image.ImageView;
 
 public class Knight extends Piece {
 
-    public Knight(boolean isWhite) {
-        super(isWhite);
+    public Knight(boolean isWhite, int row, int col) {
+        super(isWhite, row, col);
     }
 
     @Override
