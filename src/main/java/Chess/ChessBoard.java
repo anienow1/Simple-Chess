@@ -4,7 +4,6 @@ import Chess.Pieces.Bishop;
 import Chess.Pieces.King;
 import Chess.Pieces.Knight;
 import Chess.Pieces.Pawn;
-import Chess.Pieces.Piece;
 import Chess.Pieces.Queen;
 import Chess.Pieces.Rook;
 import javafx.scene.paint.Color;
