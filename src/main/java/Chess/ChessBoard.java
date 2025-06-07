@@ -61,6 +61,13 @@ public class ChessBoard {
                 if (row == 5 && col == 6) {
                     board[5][6] = new GameSquare(5, 6, new Pawn(false, 5, 6), this, color);
                 }
+                if (row == 5 && col == 3) {
+                    board[5][3] = new GameSquare(5, 3, new Rook(true, 5, 3), this, color);
+                }
+                if (row == 2 && col == 2) {
+                    board[2][2] = new GameSquare(2, 2, new Rook(false, 2, 2), this, color);
+
+                }
             }
         }
     }
@@ -81,19 +88,34 @@ public class ChessBoard {
         isWhiteTurn = !isWhiteTurn;
     }
 
-    public void squareClicked(GameSquare square) {
+    private boolean colorMatches(GameSquare.SquareColor squareColor, boolean isWhite) {
+        if (isWhite && squareColor == GameSquare.SquareColor.WHITE ||
+                !isWhite && squareColor == GameSquare.SquareColor.BLACK) {
+            return true;
+        }
+        return false;
+    }
+
+    public void squareClicked(GameSquare square) { // Remove all markings from all board squares
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 this.getBoard()[row][col].isClicked(false);
             }
         }
-        square.isClicked(true);
-        if (square.getPiece() != null) {
+        square.isClicked(true); // Highlight the input square and find all moves for that piece.
+        if (square.getPiece() != null && colorMatches(square.getPieceColor(), isWhiteTurn)) {
             ArrayList<GameSquare> squares = this.findPossibleMoves(square.getPiece());
-            markValidSquare(squares);
+            markValidSquare(squares); // Take the valid square list and apply circles on the board.
         }
     }
 
+    /**
+     * Searches for and returns all valid moves for the input piece to make on the
+     * game board.
+     * 
+     * @param aPiece Chess piece to find the valid moves for.
+     * @return An ArrayList of all legal moves for the input piece to make.
+     */
     private ArrayList<GameSquare> findPossibleMoves(Piece aPiece) {
         ArrayList<GameSquare> possibleMoves = new ArrayList<>();
         for (int row = 0; row < 8; row++) {
@@ -108,9 +130,6 @@ public class ChessBoard {
     }
 
     private void markValidSquare(ArrayList<GameSquare> possibleMoves) {
-        if (possibleMoves.size() == 0) {
-            return;
-        }
         for (GameSquare square : possibleMoves) {
             square.highlight();
         }

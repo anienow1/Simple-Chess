@@ -3,6 +3,7 @@ package Chess;
 import Chess.Pieces.Piece;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
+import javafx.scene.shape.Circle;
 import javafx.scene.shape.Rectangle;
 
 public class GameSquare extends StackPane {
@@ -68,35 +69,50 @@ public class GameSquare extends StackPane {
     }
 
     public void setPiece(Piece newPiece) {
+        this.getChildren().remove(this.piece.getImage());
         this.piece = newPiece;
+        this.getChildren().add(this.piece.getImage());
     }
 
     public boolean isSelected() {
         return isSelected;
     }
 
-    private void setColorAfterClicked() {
-        if ((this.row + this.col) % 2 == 0) {
-            this.square.setFill(Color.rgb(172, 134, 60));
-        } else {
-            this.square.setFill(Color.rgb(119, 94, 32));
-        }
+    private Color getColor() {
+        return (this.row + this.col) % 2 == 0 ? Color.rgb(238, 237, 210) : Color.rgb(117, 148, 91);
     }
 
-    public void isClicked(boolean clicked) {
-        if (clicked && (board.isWhiteTurn() && this.getPieceColor() == SquareColor.WHITE) ||
-                (!board.isWhiteTurn() && this.getPieceColor() == SquareColor.BLACK)) {
-            setColorAfterClicked();
-        } else {
-            if ((this.row + this.col) % 2 == 0) {
-                this.square.setFill(Color.rgb(238, 237, 210));
-            } else {
-                this.square.setFill(Color.rgb(117, 148, 91));
+    public void isClicked(boolean clicked) { // All square pieces perform this method after the board is clicked.
+        if (clicked && ((board.isWhiteTurn() && this.getPieceColor() == SquareColor.WHITE) || // If the click is on a
+                                                                                             // piece, and it is that
+                                                                                             // piece color's turn, 
+                (!board.isWhiteTurn() && this.getPieceColor() == SquareColor.BLACK))) {       // then highlight it.
+            Color fillColor = (this.row + this.col % 2 == 0) ? (Color.rgb(172, 134, 60)) : (Color.rgb(119, 94, 32)); 
+            this.square.setFill(fillColor);
+
+        } else { // If the square wasn't clicked, set it to default color and remove circles from it. 
+            this.square.setFill(this.getColor());
+            if (this.getChildren().size() == 3 || (this.getChildren().size() == 2 && this.isEmpty)) {
+                this.getChildren().remove(1);
             }
         }
     }
 
     public void highlight() {
-        setColorAfterClicked();
+        Circle circle = new Circle();
+        circle.setFill(this.getColor().darker());
+
+        if (this.isEmpty) {
+            circle.setRadius(25);
+            this.getChildren().add(circle);
+        } else {
+            circle.setFill(null);
+            circle.setStroke(this.getColor().darker());
+            circle.setStrokeWidth(8);
+            circle.setRadius(62);
+
+            this.getChildren().remove(1);
+            this.getChildren().addAll(circle, this.piece.getImage());
+        }
     }
 }
