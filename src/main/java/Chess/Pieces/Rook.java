@@ -33,32 +33,30 @@ public class Rook extends Piece {
         int endRow = end.getRow();
         int endCol = end.getCol();
 
-        // Check up-down
-        if (startRow != endRow && startCol == endCol) { // Rooks cannot move diagonally. 
-            for (int row = startRow; row != endRow;) {
-                row = (startRow > endRow) ? row - 1 : row + 1;
-                if (!board[row][startCol].isEmpty()) { // If a piece is in the way.
-                    if (row != endRow || // If the rook is being blocked by the piece, return false.
-                            board[row][startCol].getPiece().getColor().equals(start.getPiece().getColor())) {
-                        return false;
-                    }
-                }
+        if (startRow != endRow && startCol != endCol) return false;
+
+        // Determine which way to go. 
+        // If end = start for either row or col, that plane will not be traversed
+        int rowStep = Integer.compare(endRow, startRow); 
+        int colStep = Integer.compare(endCol, startCol);
+
+        // Don't compare start with itself.
+        int row = startRow + rowStep;
+        int col = startCol + colStep;
+
+        //Traverse the grid by one each time.
+        while (row != endRow || col != endCol) {
+            if (!board[row][col].isEmpty()) {
+                return false;
             }
-            return true; // If the rook made can travel to the end square, return true.
-        } 
-        //Check left-right.
-        else if (startCol != endCol && startRow == endRow) { 
-            for (int col = startCol; col != endCol;) {
-                col = (startCol > endCol) ? col - 1 : col + 1;
-                if (!board[startRow][col].isEmpty()) { // If a piece is in the way.
-                    if (col != endCol || // If the rook is being blocked by the piece, return false.
-                            board[startRow][col].getPiece().getColor().equals(start.getPiece().getColor())) {
-                        return false;
-                    }
-                }
-            }
-            return true; // If the rook made can travel to the end square, return true.
+            row += rowStep;
+            col += colStep;
         }
-        return false;
+
+        if (!end.isEmpty() && end.getPiece().getColor().equals(start.getPiece().getColor())) {
+            return false;
+        }
+
+        return true;
     }
 }

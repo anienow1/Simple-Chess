@@ -41,40 +41,29 @@ public class Pawn extends Piece {
         int endRow = end.getRow();
         int endCol = end.getCol();
 
-        if (Math.abs(startRow - endRow) > 2 || Math.abs(startCol - endCol) > 1) { // If moving by more than 2x0 or 1x1, exit
-            return false; 
-        } else if (hasMoved && Math.abs(startRow - endRow) == 2) { // If already moved, pawns cannot move forward 2
-            return false;
-        }
-        if (start.equals(end)) {
-            return false;
+        int rowDifference = endRow - startRow; // Moving down is positive
+        int direction = isWhite ? -1 : 1; 
+        int colDifference = Math.abs(startCol - endCol);
+
+        if (start.equals(end)) return false;
+
+        // Check forward by one.
+        if (startCol == endCol && rowDifference == direction && end.isEmpty()) { 
+            return true;
         }
 
-        // As piece capturing and movement depends on the piece colors, branch for white and black
-        if (isWhite) { 
-            if (!hasMoved && (endRow - startRow) == -2 && endCol == startCol) { //Check for moving 2 squares ahead
-                if (board[startRow - 1][startCol].isEmpty() && end.isEmpty()) {
-                    return true;
-                }
-            } else if ((endRow - startRow) == -1) { //Check for moving one square ahead
-                if (endCol == startCol && end.isEmpty()) {
-                    return true;
-                } else if (Math.abs(startCol - endCol) == 1 && end.getPieceColor() == SquareColor.BLACK) { // Check for capturing diagonal right or left
-                    return true;
-                }
+        // Check forward by two if the Pawn has not yet moved.
+        if (startCol == endCol && startRow + direction * 2 == endRow && !hasMoved) { 
+            if (board[startRow + direction][startCol].isEmpty() && end.isEmpty()) {
+                return true;
             }
-        } else {
-            if (!hasMoved && (endRow - startRow) == 2 && endCol == startCol) {
-                if (board[startRow + 1][startCol].isEmpty() && end.isEmpty()) {
+        }
+
+        if (rowDifference == direction && colDifference == 1 && !end.isEmpty()) {
+            if ((isWhite && end.getPieceColor() == SquareColor.BLACK) ||
+                (!isWhite && end.getPieceColor() == SquareColor.WHITE)) {
                     return true;
                 }
-            } else if ((endRow - startRow) == 1) {
-                if (endCol == startCol && end.isEmpty()) {
-                    return true;
-                } else if (Math.abs(startCol - endCol) == 1 && end.getPieceColor() == SquareColor.WHITE) {
-                    return true;
-                }
-            }
         }
         return false;
     }
