@@ -15,17 +15,33 @@ public class King extends Piece {
     }
 
     @Override
-    public String getColor(){
+    public String getColor() {
         return isWhite ? "White" : "Black";
     }
 
-    @Override 
+    @Override
     public ImageView getImage() {
         return PieceImages.getImage(this);
     }
 
     @Override
-    public boolean canMove(ChessBoard board, GameSquare start, GameSquare end) {
-        return false;
+    public boolean canMove(ChessBoard aBoard, GameSquare start, GameSquare end) {
+        int startRow = start.getRow();
+        int startCol = start.getCol();
+
+        int endRow = end.getRow();
+        int endCol = end.getCol();
+
+        // Confine movement to 1 square in any direction
+        if (Math.abs(startRow - endRow) > 1 || Math.abs(startCol - endCol) > 1)
+            return false;
+
+        // Cannot capture same color piece
+        if (!end.isEmpty() && 
+            end.getPiece().getColor().equals(start.getPiece().getColor())) {
+                return false;
+            }
+
+            return true;
     }
 }

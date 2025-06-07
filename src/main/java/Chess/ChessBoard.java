@@ -56,16 +56,16 @@ public class ChessBoard {
                 }
 
                 if (row == 5 && col == 4) {
-                    board[5][4] = new GameSquare(5, 4, new Queen(false, 5, 4), this, color);
+                    board[5][4] = new GameSquare(5, 4, new Knight(false, 5, 4), this, color);
                 }
                 if (row == 5 && col == 6) {
-                    board[5][6] = new GameSquare(5, 6, new Pawn(false, 5, 6), this, color);
+                    board[5][6] = new GameSquare(5, 6, new Knight(false, 5, 6), this, color);
                 }
                 if (row == 5 && col == 3) {
-                    board[5][3] = new GameSquare(5, 3, new Queen(true, 5, 3), this, color);
+                    board[5][3] = new GameSquare(5, 3, new Knight(true, 5, 3), this, color);
                 }
                 if (row == 2 && col == 2) {
-                    board[2][2] = new GameSquare(2, 2, new Queen(false, 2, 2), this, color);
+                    board[2][2] = new GameSquare(2, 2, new Knight(false, 2, 2), this, color);
 
                 }
             }
