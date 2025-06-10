@@ -16,6 +16,7 @@ public class ChessBoard {
     private GameSquare[][] board = new GameSquare[8][8];
     private final double SQUARE_SIZE;
     private boolean isWhiteTurn = true;
+    public GameSquare selectedSquare;
 
     public ChessBoard(double windowHeight) {
         SQUARE_SIZE = windowHeight / 8;
@@ -80,6 +81,10 @@ public class ChessBoard {
         return SQUARE_SIZE;
     }
 
+    public GameSquare getSelectedSquare() {
+        return selectedSquare;
+    }
+
     public boolean isWhiteTurn() {
         return isWhiteTurn;
     }
@@ -88,7 +93,11 @@ public class ChessBoard {
         isWhiteTurn = !isWhiteTurn;
     }
 
-    private boolean colorMatches(GameSquare.SquareColor squareColor, boolean isWhite) {
+    public void setSelectedSquare(GameSquare square) {
+        selectedSquare = square;
+    }
+
+    public boolean colorMatches(GameSquare.SquareColor squareColor, boolean isWhite) {
         if (isWhite && squareColor == GameSquare.SquareColor.WHITE ||
                 !isWhite && squareColor == GameSquare.SquareColor.BLACK) {
             return true;
@@ -132,6 +141,15 @@ public class ChessBoard {
     private void markValidSquare(ArrayList<GameSquare> possibleMoves) {
         for (GameSquare square : possibleMoves) {
             square.highlight();
+        }
+    }
+
+    public void makeMove(GameSquare start, GameSquare end) {
+        System.out.println(start.getRow());
+        if (!start.isEmpty() && start.getPiece().canMove(this, start, end)) {
+            end.setPiece(start.getPiece());
+            changeTurns();
+            start.removePiece();
         }
     }
 }

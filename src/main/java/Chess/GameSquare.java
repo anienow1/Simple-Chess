@@ -1,6 +1,7 @@
 package Chess;
 
 import Chess.Pieces.Piece;
+import javafx.scene.image.ImageView;
 import javafx.scene.layout.StackPane;
 import javafx.scene.paint.Color;
 import javafx.scene.shape.Circle;
@@ -69,9 +70,23 @@ public class GameSquare extends StackPane {
     }
 
     public void setPiece(Piece newPiece) {
-        this.getChildren().remove(this.piece.getImage());
+
+        this.getChildren().removeIf(node -> node instanceof ImageView);
+        
         this.piece = newPiece;
+        this.piece.updatePosition(this.row, this.col);
+        this.pieceColor = newPiece.getColor() == "White" ? SquareColor.WHITE : SquareColor.BLACK;
+        this.isEmpty = false;
+
         this.getChildren().add(this.piece.getImage());
+    }
+
+    public void removePiece() {
+        this.getChildren().removeIf(node -> node instanceof ImageView);
+        this.piece = null;
+        this.isEmpty = true;
+        
+        this.pieceColor = SquareColor.NONE;
     }
 
     public boolean isSelected() {
@@ -84,13 +99,14 @@ public class GameSquare extends StackPane {
 
     public void isClicked(boolean clicked) { // All square pieces perform this method after the board is clicked.
         if (clicked && ((board.isWhiteTurn() && this.getPieceColor() == SquareColor.WHITE) || // If the click is on a
-                                                                                             // piece, and it is that
-                                                                                             // piece color's turn, 
-                (!board.isWhiteTurn() && this.getPieceColor() == SquareColor.BLACK))) {       // then highlight it.
-            Color fillColor = (this.row + this.col % 2 == 0) ? (Color.rgb(172, 134, 60)) : (Color.rgb(119, 94, 32)); 
+                                                                                              // piece, and it is that
+                                                                                              // piece color's turn,
+                (!board.isWhiteTurn() && this.getPieceColor() == SquareColor.BLACK))) { // then highlight it.
+            Color fillColor = (this.row + this.col % 2 == 0) ? (Color.rgb(172, 134, 60)) : (Color.rgb(119, 94, 32));
             this.square.setFill(fillColor);
 
-        } else { // If the square wasn't clicked, set it to default color and remove circles from it. 
+        } else { // If the square wasn't clicked, set it to default color and remove circles from
+                 // it.
             this.square.setFill(this.getColor());
             if (this.getChildren().size() == 3 || (this.getChildren().size() == 2 && this.isEmpty)) {
                 this.getChildren().remove(1);
@@ -111,7 +127,7 @@ public class GameSquare extends StackPane {
             circle.setStrokeWidth(8);
             circle.setRadius(62);
 
-            this.getChildren().remove(1);
+            this.getChildren().removeIf(node -> node instanceof ImageView);
             this.getChildren().addAll(circle, this.piece.getImage());
         }
     }

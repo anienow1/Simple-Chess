@@ -6,6 +6,8 @@ import javafx.scene.image.ImageView;
 
 public class King extends Piece {
 
+    private boolean hasMoved = false;
+
     public King(boolean isWhite, int row, int col) {
         super(isWhite, row, col);
     }
@@ -22,6 +24,10 @@ public class King extends Piece {
     @Override
     public ImageView getImage() {
         return PieceImages.getImage(this);
+    }
+
+    public void setHasMoved() {
+        hasMoved = true;
     }
 
     @Override

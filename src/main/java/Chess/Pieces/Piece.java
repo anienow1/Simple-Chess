@@ -39,5 +39,10 @@ public abstract class Piece {
         this.isVisible = visible;
     }
 
+    public void updatePosition(int row, int col) {
+        this.row = row;
+        this.col = col;
+    }
+
     public abstract boolean canMove(ChessBoard board, GameSquare start, GameSquare end);
 }

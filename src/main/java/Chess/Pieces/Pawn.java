@@ -31,7 +31,6 @@ public class Pawn extends Piece {
         hasMoved = true;
     }
 
-    // TODO
     @Override
     public boolean canMove(ChessBoard aboard, GameSquare start, GameSquare end) {
         GameSquare[][] board = aboard.getBoard();
@@ -45,7 +44,9 @@ public class Pawn extends Piece {
         int direction = isWhite ? -1 : 1; 
         int colDifference = Math.abs(startCol - endCol);
 
+
         if (start.equals(end)) return false;
+
 
         // Check forward by one.
         if (startCol == endCol && rowDifference == direction && end.isEmpty()) { 
@@ -65,6 +66,10 @@ public class Pawn extends Piece {
                     return true;
                 }
         }
+
+        //TODO en passant
+
+
         return false;
     }
 }

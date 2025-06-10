@@ -16,7 +16,6 @@ import javafx.stage.StageStyle;
 
 import java.io.IOException;
 
-
 /**
  * JavaFX App
  */
@@ -29,7 +28,6 @@ public class Main extends Application {
         double screenHeight = screenBounds.getHeight();
         Scene scene = new Scene(root, screenBounds.getWidth(), screenHeight, Color.BLACK);
 
-
         GridPane grid = new GridPane();
         grid.setAlignment(Pos.CENTER);
 
@@ -40,14 +38,34 @@ public class Main extends Application {
                 GameSquare square = board.getBoard()[row][col];
 
                 square.setOnMouseClicked(event -> {
-                    board.squareClicked(square);
+                    GameSquare selectedSquare = board.getSelectedSquare();
+
+                    if (selectedSquare == null) {
+                        if (!square.isEmpty() && board.colorMatches(square.getPieceColor(), board.isWhiteTurn())) {
+                            board.setSelectedSquare(square);
+                            board.squareClicked(square);
+                        }
+                    }
+
+                    else {
+                        if (!square.isEmpty() && board.colorMatches(square.getPieceColor(), board.isWhiteTurn())) {
+                            board.setSelectedSquare(square);
+                            board.squareClicked(square);
+                        }
+
+                        else {
+                            board.makeMove(selectedSquare, square);
+                            board.setSelectedSquare(null);
+                            board.squareClicked(square);
+                        }
+                    }
+
+                    board.setSelectedSquare(square);
                 });
 
                 grid.add(square, col, row);
             }
         }
-
-
 
         stage.addEventHandler(KeyEvent.KEY_PRESSED, new EventHandler<KeyEvent>() {
             @Override
@@ -70,7 +88,5 @@ public class Main extends Application {
     public static void main(String[] args) {
         launch();
     }
-
-    
 
 }
