@@ -18,6 +18,9 @@ public class ChessBoard {
     private boolean isWhiteTurn = true;
     public GameSquare selectedSquare;
 
+    private GameSquare whiteKingSquare;
+    private GameSquare blackKingSquare;
+
     public ChessBoard(double windowHeight) {
         SQUARE_SIZE = windowHeight / 8;
         initializeNewBoard();
@@ -54,20 +57,11 @@ public class ChessBoard {
                 } else {
                     board[row][col] = new GameSquare(row, col, new King(row == 0 ? false : true, row, col), this,
                             color);
-                }
-
-                if (row == 5 && col == 4) {
-                    board[5][4] = new GameSquare(5, 4, new Knight(false, 5, 4), this, color);
-                }
-                if (row == 5 && col == 6) {
-                    board[5][6] = new GameSquare(5, 6, new Knight(false, 5, 6), this, color);
-                }
-                if (row == 5 && col == 3) {
-                    board[5][3] = new GameSquare(5, 3, new Knight(true, 5, 3), this, color);
-                }
-                if (row == 2 && col == 2) {
-                    board[2][2] = new GameSquare(2, 2, new Knight(false, 2, 2), this, color);
-
+                    if (row == 0) {
+                        blackKingSquare = board[row][col];
+                    } else {
+                        whiteKingSquare = board[row][col];
+                    }
                 }
             }
         }
@@ -111,11 +105,35 @@ public class ChessBoard {
                 this.getBoard()[row][col].isClicked(false);
             }
         }
+
         square.isClicked(true); // Highlight the input square and find all moves for that piece.
+
         if (square.getPiece() != null && colorMatches(square.getPieceColor(), isWhiteTurn)) {
             ArrayList<GameSquare> squares = this.findPossibleMoves(square.getPiece());
             markValidSquare(squares); // Take the valid square list and apply circles on the board.
         }
+    }
+
+    public boolean isKingInCheck(boolean kingColorIsWhite) {
+        GameSquare kingSquare = kingColorIsWhite ? whiteKingSquare : blackKingSquare; // TODO
+
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                GameSquare otherSquare = this.board[row][col];
+
+                if (!otherSquare.isEmpty() && otherSquare.getPieceColor() != kingSquare.getPieceColor()) {
+                    if (otherSquare.getPiece().canMove(this, otherSquare, kingSquare)) {
+                        return true;
+                    }
+                }
+            }
+        }
+        return false;
+    }
+
+    public boolean isCheckmate(boolean isWhite) {
+        if (!isKingInCheck(isWhite)) return false;
+        return true;
     }
 
     /**
@@ -130,7 +148,6 @@ public class ChessBoard {
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 if (aPiece.canMove(this, board[aPiece.getRow()][aPiece.getCol()], board[row][col])) { // Requires start
-                                                                                                      // square
                     possibleMoves.add(board[row][col]);
                 }
             }
@@ -145,11 +162,35 @@ public class ChessBoard {
     }
 
     public void makeMove(GameSquare start, GameSquare end) {
-        System.out.println(start.getRow());
         if (!start.isEmpty() && start.getPiece().canMove(this, start, end)) {
-            end.setPiece(start.getPiece());
-            changeTurns();
+            Piece movingPiece = start.getPiece();
+            movingPiece.updatePosition(end.getRow(), end.getCol());
+
+            end.setPiece(movingPiece);
             start.removePiece();
+
+            if (start.equals(whiteKingSquare)) {
+                start.setInCheck(false);
+                whiteKingSquare = end;
+            } else if (start.equals(blackKingSquare)) {
+                start.setInCheck(false);
+                blackKingSquare = end;
+            }
+
+            // Highlight kings if they are in check
+            if (isKingInCheck(false)) {
+                this.blackKingSquare.setInCheck(true);
+            } else {
+                this.blackKingSquare.setInCheck(false);
+            }
+
+            if (isKingInCheck(true)) {
+                this.whiteKingSquare.setInCheck(true);
+            } else {
+                this.whiteKingSquare.setInCheck(false);
+            }
+
+            changeTurns();
         }
     }
 }

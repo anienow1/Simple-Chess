@@ -18,6 +18,7 @@ public class GameSquare extends StackPane {
     private final ChessBoard board;
 
     private boolean isSelected = false; // Player clicked on it
+    private boolean inCheck = false; // Only applicable to squares with Kings.
     private Rectangle square;
 
     public enum SquareColor {
@@ -69,10 +70,15 @@ public class GameSquare extends StackPane {
         return isEmpty;
     }
 
+    public void setInCheck(boolean check) {
+        this.inCheck = check;
+        updateColor();
+    }
+
     public void setPiece(Piece newPiece) {
 
         this.getChildren().removeIf(node -> node instanceof ImageView);
-        
+
         this.piece = newPiece;
         this.piece.updatePosition(this.row, this.col);
         this.pieceColor = newPiece.getColor() == "White" ? SquareColor.WHITE : SquareColor.BLACK;
@@ -85,7 +91,7 @@ public class GameSquare extends StackPane {
         this.getChildren().removeIf(node -> node instanceof ImageView);
         this.piece = null;
         this.isEmpty = true;
-        
+
         this.pieceColor = SquareColor.NONE;
     }
 
@@ -97,7 +103,22 @@ public class GameSquare extends StackPane {
         return (this.row + this.col) % 2 == 0 ? Color.rgb(238, 237, 210) : Color.rgb(117, 148, 91);
     }
 
+    private void updateColor() {
+        if (inCheck) {
+            if ((this.row + this.col) % 2 == 0) {
+                this.square.setFill(Color.rgb(243, 62, 66));
+            } else {
+                this.square.setFill(Color.rgb(231, 53, 54));
+            }
+        } else {
+            this.square.setFill(getColor());
+        }
+    }
+
     public void isClicked(boolean clicked) { // All square pieces perform this method after the board is clicked.
+        if (inCheck)
+            return;
+
         if (clicked && ((board.isWhiteTurn() && this.getPieceColor() == SquareColor.WHITE) || // If the click is on a
                                                                                               // piece, and it is that
                                                                                               // piece color's turn,
@@ -107,10 +128,10 @@ public class GameSquare extends StackPane {
 
         } else { // If the square wasn't clicked, set it to default color and remove circles from
                  // it.
-            this.square.setFill(this.getColor());
-            if (this.getChildren().size() == 3 || (this.getChildren().size() == 2 && this.isEmpty)) {
-                this.getChildren().remove(1);
+            if (!inCheck) {
+                updateColor();
             }
+            this.getChildren().removeIf(node -> node instanceof Circle);
         }
     }
 
