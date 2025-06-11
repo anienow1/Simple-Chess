@@ -21,6 +21,13 @@ import java.io.IOException;
  */
 public class Main extends Application {
 
+    private Modes currentMode = Modes.moveMode;
+
+    private enum Modes {
+        moveMode,
+        deleteMode;
+    }
+
     @Override
     public void start(Stage stage) throws IOException {
         StackPane root = new StackPane();
@@ -38,29 +45,35 @@ public class Main extends Application {
                 GameSquare square = board.getBoard()[row][col];
 
                 square.setOnMouseClicked(event -> {
-                    GameSquare selectedSquare = board.getSelectedSquare();
+                    if (currentMode == Modes.moveMode) {
+                        GameSquare selectedSquare = board.getSelectedSquare();
 
-                    if (selectedSquare == null) {
-                        if (!square.isEmpty() && board.colorMatches(square.getPieceColor(), board.isWhiteTurn())) {
-                            board.setSelectedSquare(square);
-                            board.squareClicked(square);
-                        }
-                    }
-
-                    else {
-                        if (!square.isEmpty() && board.colorMatches(square.getPieceColor(), board.isWhiteTurn())) {
-                            board.setSelectedSquare(square);
-                            board.squareClicked(square);
+                        if (selectedSquare == null) {
+                            if (!square.isEmpty() && board.colorMatches(square.getPieceColor(), board.isWhiteTurn())) {
+                                board.setSelectedSquare(square);
+                                board.squareClicked(square);
+                            }
                         }
 
                         else {
-                            board.makeMove(selectedSquare, square);
-                            board.setSelectedSquare(null);
-                            board.squareClicked(square);
+                            if (!square.isEmpty() && board.colorMatches(square.getPieceColor(), board.isWhiteTurn())) {
+                                board.setSelectedSquare(square);
+                                board.squareClicked(square);
+                            }
+
+                            else {
+                                board.makeMove(selectedSquare, square);
+                                board.setSelectedSquare(null);
+                                board.squareClicked(square);
+                            }
+                        }
+
+                        board.setSelectedSquare(square);
+                    } else if (currentMode == Modes.deleteMode) {
+                        if (!square.isEmpty()) {
+                            square.removePiece();
                         }
                     }
-
-                    board.setSelectedSquare(square);
                 });
 
                 grid.add(square, col, row);
@@ -72,6 +85,10 @@ public class Main extends Application {
             public void handle(KeyEvent event) {
                 if (event.getCode() == KeyCode.ESCAPE) {
                     stage.close();
+                } else if (event.getCode() == KeyCode.Q) {
+                    currentMode = Modes.moveMode;
+                } else if (event.getCode() == KeyCode.W) {
+                    currentMode = Modes.deleteMode;
                 }
             }
         });

@@ -11,6 +11,12 @@ import Chess.Pieces.Queen;
 import Chess.Pieces.Rook;
 import javafx.scene.paint.Color;
 
+/**
+ * Represents the main logic and state of the chessboard.
+ * Handles piece initialization, move validation, check detection, and game
+ * state.
+ */
+
 public class ChessBoard {
 
     // 8 x 8 array representing the board squares
@@ -25,16 +31,19 @@ public class ChessBoard {
     private GameSquare whiteKingSquare;
     private GameSquare blackKingSquare;
 
-    // Initialize board and set window height
+    /**
+     * Constructs the chessboard and initializes all pieces.
+     * 
+     * @param windowHeight The height of the application window.
+     */
     public ChessBoard(double windowHeight) {
         SQUARE_SIZE = windowHeight / 8;
         initializeNewBoard();
     }
 
     /**
-     * Set up a full chess board of GameSquare objects.
-     * All squares are given colors, and the first and last 2 rows are given
-     * pieces in the standard chess layout.
+     * Set up a full chess board of GameSquare objects with pieces in their starting
+     * positions.
      */
     private void initializeNewBoard() {
         for (int row = 0; row < 8; row++) {
@@ -43,9 +52,9 @@ public class ChessBoard {
                 // Checkerboard color pattern.
                 Color color;
                 if ((row + col) % 2 == 0) {
-                    color = Color.rgb(238, 237, 210);
+                    color = Color.rgb(238, 237, 210); // Light square
                 } else {
-                    color = Color.rgb(117, 148, 91);
+                    color = Color.rgb(117, 148, 91); // Dark Square
                 }
 
                 if (row == 1 || row == 6) { // Pawns
@@ -53,25 +62,37 @@ public class ChessBoard {
                             color);
                 } else if (row != 0 && row != 7) { // Empty
                     board[row][col] = new GameSquare(row, col, null, this, color);
-                } else if (col == 0 || col == 7) { // Rooks
-                    board[row][col] = new GameSquare(row, col, new Rook(row == 0 ? false : true, row, col), this,
-                            color);
-                } else if (col == 1 || col == 6) { // Knights
-                    board[row][col] = new GameSquare(row, col, new Knight(row == 0 ? false : true, row, col), this,
-                            color);
-                } else if (col == 2 || col == 5) { // Bishop
-                    board[row][col] = new GameSquare(row, col, new Bishop(row == 0 ? false : true, row, col), this,
-                            color);
-                } else if (col == 3) { // Queen
-                    board[row][col] = new GameSquare(row, col, new Queen(row == 0 ? false : true, row, col), this,
-                            color);
-                } else { // Kings. Each is assigned to a kingSquare variable for tracking.
-                    board[row][col] = new GameSquare(row, col, new King(row == 0 ? false : true, row, col), this,
-                            color);
-                    if (row == 0) {
-                        blackKingSquare = board[row][col];
-                    } else {
-                        whiteKingSquare = board[row][col];
+                } else {
+                    Piece piece;
+                    switch (col) {
+                        case (0):
+                        case (7):
+                            piece = new Rook(row == 7, row, col);
+                            break;
+                        case (1):
+                        case (6):
+                            piece = new Knight(row == 7, row, col);
+                            break;
+                        case (2):
+                        case (5):
+                            piece = new Bishop(row == 7, row, col);
+                            break;
+                        case (3):
+                            piece = new Queen(row == 7, row, col);
+                            break;
+                        case (4):
+                            piece = new King(row == 7, row, col);
+                            break;
+                        default:
+                            piece = null;
+                    }
+                    board[row][col] = new GameSquare(row, col, piece, this, color);
+                    if (piece.getName().equals("King")) {
+                        if (row == 0) {
+                            blackKingSquare = board[row][col];
+                        } else {
+                            whiteKingSquare = board[row][col];
+                        }
                     }
                 }
             }
@@ -299,20 +320,20 @@ public class ChessBoard {
      */
     private void markValidSquare(ArrayList<GameSquare> possibleMoves) {
         for (GameSquare square : possibleMoves) {
-            square.highlight();
+            square.placeCircle();
         }
     }
 
     /**
      * <b> Main method of the board class. </b>
-     * <p> 
+     * <p>
      * Attempts to move the piece from the start square to the end square.
      * The method ensures the move is legal before making it, and does not leave the
      * king in check. It also updates the king square, turn switching, and checkmate
      * detection.
      * 
      * @param start The square containing the moving piece.
-     * @param end The destination square.
+     * @param end   The destination square.
      */
     public void makeMove(GameSquare start, GameSquare end) {
         if (!start.isEmpty() && start.getPiece().canMove(this, start, end)) {
