@@ -44,5 +44,9 @@ public abstract class Piece {
         this.col = col;
     }
 
+    public boolean isWhite() {
+        return isWhite;
+    }
+
     public abstract boolean canMove(ChessBoard board, GameSquare start, GameSquare end);
 }

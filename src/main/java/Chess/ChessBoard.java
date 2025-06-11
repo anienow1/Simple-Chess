@@ -131,8 +131,82 @@ public class ChessBoard {
         return false;
     }
 
+    /**
+     * Simulates moving a piece from start to end, checks if the player's king
+     * would be in check after the move, then reverts the move.
+     * 
+     * @param aPiece The piece to move.
+     * @param start  The starting square.
+     * @param end    The target square.
+     * @return true if the move leaves the king in check.
+     */
+    private boolean moveLeavesKingInCheck(Piece aPiece, GameSquare start, GameSquare end) {
+        Piece capturedPiece = end.getPiece();
+
+        // Make the move
+        end.setPiece(aPiece);
+        start.removePiece();
+
+        // Save old king square if moving king
+        GameSquare oldKingSquare = null;
+        if (aPiece.getName().equals("King")) {
+            oldKingSquare = aPiece.isWhite() ? whiteKingSquare : blackKingSquare;
+            if (aPiece.isWhite())
+                whiteKingSquare = end;
+            else
+                blackKingSquare = end;
+        }
+
+        // Check if king is in check after move
+        boolean kingInCheck = isKingInCheck(aPiece.isWhite());
+
+        // Undo the move
+        start.setPiece(aPiece);
+        if (capturedPiece != null) {
+            end.setPiece(capturedPiece);
+        } else {
+            end.removePiece();
+        }
+
+        // Restore king position
+        if (oldKingSquare != null) {
+            if (aPiece.isWhite())
+                whiteKingSquare = oldKingSquare;
+            else
+                blackKingSquare = oldKingSquare;
+        }
+
+        return kingInCheck;
+    }
+
     public boolean isCheckmate(boolean isWhite) {
-        if (!isKingInCheck(isWhite)) return false;
+        if (!isKingInCheck(isWhite))
+            return false;
+
+        for (int row = 0; row < 8; row++) {
+            for (int col = 0; col < 8; col++) {
+                GameSquare startSquare = board[row][col];
+
+                if (startSquare.isEmpty() || !colorMatches(startSquare.getPieceColor(), isWhite)) {
+                    continue;
+                }
+
+                Piece piece = startSquare.getPiece();
+
+                for (int moveRow = 0; moveRow < 8; moveRow++) {
+                    for (int moveCol = 0; moveCol < 8; moveCol++) {
+                        GameSquare moveTo = board[moveRow][moveCol];
+
+                        if (piece.canMove(this, startSquare, moveTo)) {
+                            if (!moveLeavesKingInCheck(piece, startSquare, moveTo)) {
+                                return false;
+                            }
+                        }
+
+                    }
+                }
+            }
+        }
         return true;
     }
 
@@ -145,10 +219,15 @@ public class ChessBoard {
      */
     private ArrayList<GameSquare> findPossibleMoves(Piece aPiece) {
         ArrayList<GameSquare> possibleMoves = new ArrayList<>();
+        GameSquare start = board[aPiece.getRow()][aPiece.getCol()];
+
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
-                if (aPiece.canMove(this, board[aPiece.getRow()][aPiece.getCol()], board[row][col])) { // Requires start
-                    possibleMoves.add(board[row][col]);
+                GameSquare end = board[row][col];
+                if (aPiece.canMove(this, start, end)) { // Requires start
+                    if (!moveLeavesKingInCheck(aPiece, start, end)) {
+                        possibleMoves.add(board[row][col]);
+                    }
                 }
             }
         }
@@ -163,8 +242,11 @@ public class ChessBoard {
 
     public void makeMove(GameSquare start, GameSquare end) {
         if (!start.isEmpty() && start.getPiece().canMove(this, start, end)) {
+
             Piece movingPiece = start.getPiece();
-            movingPiece.updatePosition(end.getRow(), end.getCol());
+            if (moveLeavesKingInCheck(movingPiece, start, end)) {
+                return;
+            }
 
             end.setPiece(movingPiece);
             start.removePiece();
@@ -178,19 +260,13 @@ public class ChessBoard {
             }
 
             // Highlight kings if they are in check
-            if (isKingInCheck(false)) {
-                this.blackKingSquare.setInCheck(true);
-            } else {
-                this.blackKingSquare.setInCheck(false);
-            }
-
-            if (isKingInCheck(true)) {
-                this.whiteKingSquare.setInCheck(true);
-            } else {
-                this.whiteKingSquare.setInCheck(false);
-            }
+            this.blackKingSquare.setInCheck(isKingInCheck(false));
+            this.whiteKingSquare.setInCheck(isKingInCheck(true));
 
             changeTurns();
+
+            if (isCheckmate(isWhiteTurn))
+                System.out.println("Checkmate");
         }
     }
 }
