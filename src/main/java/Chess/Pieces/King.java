@@ -2,7 +2,6 @@ package Chess.Pieces;
 
 import Chess.ChessBoard;
 import Chess.GameSquare;
-import javafx.scene.image.ImageView;
 
 public class King extends Piece {
 
@@ -12,18 +11,9 @@ public class King extends Piece {
         super(isWhite, row, col);
     }
 
+    @Override
     public String getName() {
         return "King";
-    }
-
-    @Override
-    public String getColor() {
-        return isWhite ? "White" : "Black";
-    }
-
-    @Override
-    public ImageView getImage() {
-        return PieceImages.getImage(this);
     }
 
     public void setHasMoved() {
@@ -35,51 +25,49 @@ public class King extends Piece {
     }
 
     private boolean canCastle(ChessBoard aBoard, GameSquare start, GameSquare end) {
-        int startRow = start.getRow();
+        int row = start.getRow();
         int startCol = start.getCol();
-
         int endCol = end.getCol();
 
         boolean isLeftSide = startCol > endCol;
         int rookCol = isLeftSide ? 0 : 7;
-        GameSquare rookSquare = aBoard.getBoard()[startRow][rookCol];
+        int direction = isLeftSide ? -1 : 1;
 
+        GameSquare rookSquare = aBoard.getBoard()[row][rookCol];
+
+        // Rook is present and unmoved.
         if (rookSquare.isEmpty() || !(rookSquare.getPiece() instanceof Rook)) return false;
 
         Rook rook = (Rook) rookSquare.getPiece();
+        if (rook.hasMoved()) return false;
 
-        if (rook.hasMoved() || !rook.getColor().equals(this.getColor())) return false;
-
-        int direction = isLeftSide ? -1 : 1;
-
-
+        // The squares between the king and rook must be empty and not threatened.
         for (int col = startCol + direction; col != rookCol; col += direction ) {
-            GameSquare square = aBoard.getBoard()[startRow][col];
-            if (!square.isEmpty() || aBoard.moveLeavesKingInCheck(this, start, end) || aBoard.moveLeavesKingInCheck(this, start, square)) {
+            GameSquare square = aBoard.getBoard()[row][col];
+            if (!square.isEmpty() || aBoard.moveLeavesKingInCheck(this, start, square)) {
                 return false;
             }
         }
 
-        return true;
+        return !aBoard.moveLeavesKingInCheck(this, start, end);
     }
 
     @Override
     public boolean canMove(ChessBoard aBoard, GameSquare start, GameSquare end) {
         int startRow = start.getRow();
         int startCol = start.getCol();
-
         int endRow = end.getRow();
         int endCol = end.getCol();
 
+        int rowDifference = (Math.abs(startRow - endRow));
+        int colDifference = (Math.abs(startCol - endCol));
+
         // Confine movement to 1 square in any direction
-        if (Math.abs(startRow - endRow) <= 1 && Math.abs(startCol - endCol) <= 1) {
-            if (!end.isEmpty() && end.getPiece().getColor().equals(start.getPiece().getColor())) {
-                return false;
-            }
-            return true;
+        if (rowDifference <= 1 && colDifference <= 1) {
+            return (end.isEmpty() || !end.getPiece().getColor().equals(this.getColor()));
         }
 
-        if (!hasMoved && startRow == endRow && Math.abs(startCol - endCol) == 2) {
+        if (!hasMoved && rowDifference == 0 && colDifference == 2) {
             return this.canCastle(aBoard, start, end);
         }
 

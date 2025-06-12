@@ -7,7 +7,6 @@ import javafx.scene.image.ImageView;
 public abstract class Piece {
 
     protected boolean isWhite; // White = True, Black = False
-    protected boolean isVisible = true;
     protected int row;
     protected int col;
 
@@ -19,12 +18,12 @@ public abstract class Piece {
 
     public abstract String getName();
 
-    public abstract String getColor();
+    public String getColor() {
+        return isWhite ? "White" : "Black";
+    }
 
-    public abstract ImageView getImage();
-
-    public boolean getVisibility() {
-        return this.isVisible;
+    public ImageView getImage() {
+        return PieceImages.getImage(this);
     }
 
     public int getRow() {
@@ -35,8 +34,8 @@ public abstract class Piece {
         return this.col;
     }
 
-    public void setVisibility(boolean visible) {
-        this.isVisible = visible;
+    public boolean isWhite() {
+        return isWhite;
     }
 
     public void updatePosition(int row, int col) {
@@ -44,9 +43,26 @@ public abstract class Piece {
         this.col = col;
     }
 
-    public boolean isWhite() {
-        return isWhite;
-    }
-
     public abstract boolean canMove(ChessBoard board, GameSquare start, GameSquare end);
+
+    // Method for Queens, Bishops, and Rooks for straight line logic.
+    protected boolean isClearPath(ChessBoard aBoard, GameSquare start, GameSquare end) {
+        GameSquare[][] board = aBoard.getBoard();
+
+        int rowStep = Integer.compare(end.getRow(), start.getRow());
+        int colStep = Integer.compare(end.getCol(), start.getCol());
+
+        int row = start.getRow() + rowStep;
+        int col = start.getCol() + colStep;
+
+        while (row != end.getRow() || col != end.getCol()) {
+            if (!board[row][col].isEmpty()) {
+                return false;
+            }
+            row += rowStep;
+            col += colStep;
+        }
+
+        return end.isEmpty() || !end.getPiece().getColor().equals(this.getColor());
+    }
 }

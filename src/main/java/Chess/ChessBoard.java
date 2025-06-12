@@ -197,7 +197,7 @@ public class ChessBoard {
      * @return True if the king is in check, false if it is not.
      */
     public boolean isKingInCheck(boolean kingColorIsWhite) {
-        GameSquare kingSquare = kingColorIsWhite ? whiteKingSquare : blackKingSquare; // TODO
+        GameSquare kingSquare = kingColorIsWhite ? whiteKingSquare : blackKingSquare;
 
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
