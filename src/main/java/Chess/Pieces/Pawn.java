@@ -7,7 +7,7 @@ import javafx.scene.image.ImageView;
 
 public class Pawn extends Piece {
 
-    private boolean hasMoved = false;
+    private int hasMoved = 0;
 
     public Pawn(boolean isWhite, int row, int col) {
         super(isWhite, row, col);
@@ -27,8 +27,12 @@ public class Pawn extends Piece {
         return PieceImages.getImage(this);
     }
 
-    public void setHasMoved() {
-        hasMoved = true;
+    public void moved() {
+        hasMoved++;
+    }
+
+    public int numMoved() {
+        return hasMoved;
     }
 
     @Override
@@ -41,34 +45,42 @@ public class Pawn extends Piece {
         int endCol = end.getCol();
 
         int rowDifference = endRow - startRow; // Moving down is positive
-        int direction = isWhite ? -1 : 1; 
+        int direction = isWhite ? -1 : 1;
         int colDifference = Math.abs(startCol - endCol);
 
-
-        if (start.equals(end)) return false;
-
+        if (start.equals(end))
+            return false;
 
         // Check forward by one.
-        if (startCol == endCol && rowDifference == direction && end.isEmpty()) { 
+        if (startCol == endCol && rowDifference == direction && end.isEmpty()) {
             return true;
         }
 
         // Check forward by two if the Pawn has not yet moved.
-        if (startCol == endCol && startRow + direction * 2 == endRow && !hasMoved) { 
+        if (startCol == endCol && startRow + direction * 2 == endRow && hasMoved == 0) {
             if (board[startRow + direction][startCol].isEmpty() && end.isEmpty()) {
                 return true;
             }
         }
 
+        // Check diagonal capture
         if (rowDifference == direction && colDifference == 1 && !end.isEmpty()) {
             if ((isWhite && end.getPieceColor() == SquareColor.BLACK) ||
-                (!isWhite && end.getPieceColor() == SquareColor.WHITE)) {
-                    return true;
-                }
+                    (!isWhite && end.getPieceColor() == SquareColor.WHITE)) {
+                return true;
+            }
         }
 
-        //TODO en passant
+        // En passant
+        GameSquare enPassantSquare = aboard.getEnPassantSquare(start.getPieceColor() == GameSquare.SquareColor.WHITE);
 
+        if (rowDifference == direction && colDifference == 1 && end.isEmpty()) {
+            GameSquare adjacentSquare = board[startRow + direction][endCol];
+
+            if (enPassantSquare != null && enPassantSquare.equals(adjacentSquare)) {
+                return true;
+            }
+        }
 
         return false;
     }

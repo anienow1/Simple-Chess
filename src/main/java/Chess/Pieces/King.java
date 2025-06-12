@@ -30,6 +30,39 @@ public class King extends Piece {
         hasMoved = true;
     }
 
+    public boolean hasMoved() {
+        return hasMoved;
+    }
+
+    private boolean canCastle(ChessBoard aBoard, GameSquare start, GameSquare end) {
+        int startRow = start.getRow();
+        int startCol = start.getCol();
+
+        int endCol = end.getCol();
+
+        boolean isLeftSide = startCol > endCol;
+        int rookCol = isLeftSide ? 0 : 7;
+        GameSquare rookSquare = aBoard.getBoard()[startRow][rookCol];
+
+        if (rookSquare.isEmpty() || !(rookSquare.getPiece() instanceof Rook)) return false;
+
+        Rook rook = (Rook) rookSquare.getPiece();
+
+        if (rook.hasMoved() || !rook.getColor().equals(this.getColor())) return false;
+
+        int direction = isLeftSide ? -1 : 1;
+
+
+        for (int col = startCol + direction; col != rookCol; col += direction ) {
+            GameSquare square = aBoard.getBoard()[startRow][col];
+            if (!square.isEmpty() || aBoard.moveLeavesKingInCheck(this, start, end) || aBoard.moveLeavesKingInCheck(this, start, square)) {
+                return false;
+            }
+        }
+
+        return true;
+    }
+
     @Override
     public boolean canMove(ChessBoard aBoard, GameSquare start, GameSquare end) {
         int startRow = start.getRow();
@@ -39,15 +72,17 @@ public class King extends Piece {
         int endCol = end.getCol();
 
         // Confine movement to 1 square in any direction
-        if (Math.abs(startRow - endRow) > 1 || Math.abs(startCol - endCol) > 1)
-            return false;
-
-        // Cannot capture same color piece
-        if (!end.isEmpty() && 
-            end.getPiece().getColor().equals(start.getPiece().getColor())) {
+        if (Math.abs(startRow - endRow) <= 1 && Math.abs(startCol - endCol) <= 1) {
+            if (!end.isEmpty() && end.getPiece().getColor().equals(start.getPiece().getColor())) {
                 return false;
             }
-
             return true;
+        }
+
+        if (!hasMoved && startRow == endRow && Math.abs(startCol - endCol) == 2) {
+            return this.canCastle(aBoard, start, end);
+        }
+
+        return false;
     }
 }

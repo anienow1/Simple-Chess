@@ -31,6 +31,9 @@ public class ChessBoard {
     private GameSquare whiteKingSquare;
     private GameSquare blackKingSquare;
 
+    private GameSquare whiteEnPassantTarget = null;
+    private GameSquare blackEnPassantTarget = null;
+
     /**
      * Constructs the chessboard and initializes all pieces.
      * 
@@ -57,14 +60,15 @@ public class ChessBoard {
                     color = Color.rgb(117, 148, 91); // Dark Square
                 }
 
-                if (row == 1 || row == 6) { // Pawns
-                    board[row][col] = new GameSquare(row, col, new Pawn(row == 1 ? false : true, row, col), this,
-                            color);
-                } else if (row != 0 && row != 7) { // Empty
+             //   if (row == 1 || row == 6) { // Pawns
+               //     board[row][col] = new GameSquare(row, col, new Pawn(row == 1 ? false : true, row, col), this,
+              //              color);
+                 if (row != 0 && row != 7) { // Empty
                     board[row][col] = new GameSquare(row, col, null, this, color);
                 } else {
                     Piece piece;
                     switch (col) {
+                        // case -2, 3 -> {}
                         case (0):
                         case (7):
                             piece = new Rook(row == 7, row, col);
@@ -111,6 +115,12 @@ public class ChessBoard {
      */
     public double getSquareSize() {
         return SQUARE_SIZE;
+    }
+
+    public GameSquare getEnPassantSquare(boolean isWhite) {
+        if (isWhite)
+            return whiteEnPassantTarget;
+        return blackEnPassantTarget;
     }
 
     /**
@@ -212,7 +222,7 @@ public class ChessBoard {
      * @param end    The ending square.
      * @return true if the move leaves the king in check.
      */
-    private boolean moveLeavesKingInCheck(Piece aPiece, GameSquare start, GameSquare end) {
+    public boolean moveLeavesKingInCheck(Piece aPiece, GameSquare start, GameSquare end) {
         Piece capturedPiece = end.getPiece();
 
         // Make the move
@@ -258,9 +268,7 @@ public class ChessBoard {
      * @param isWhite The color of the player. True = white, false = black.
      * @return True if in checkmate, false if not.
      */
-    public boolean isCheckmate(boolean isWhite) {
-        if (!isKingInCheck(isWhite))
-            return false;
+    public boolean hasValidMove(boolean isWhite) {
 
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
@@ -278,7 +286,7 @@ public class ChessBoard {
 
                         if (piece.canMove(this, startSquare, moveTo)) {
                             if (!moveLeavesKingInCheck(piece, startSquare, moveTo)) {
-                                return false;
+                                return true;
                             }
                         }
 
@@ -286,7 +294,7 @@ public class ChessBoard {
                 }
             }
         }
-        return true;
+        return false;
     }
 
     /**
@@ -339,13 +347,56 @@ public class ChessBoard {
         if (!start.isEmpty() && start.getPiece().canMove(this, start, end)) {
 
             Piece movingPiece = start.getPiece();
-            if (moveLeavesKingInCheck(movingPiece, start, end)) {
+
+            if (moveLeavesKingInCheck(movingPiece, start, end)) { // Do not allow the move if it results in self-check
                 return;
             }
 
-            end.setPiece(movingPiece);
-            start.removePiece();
+            // Reset the en Passant targets.
+            if (isWhiteTurn) {
+                blackEnPassantTarget = null;
+            } else {
+                whiteEnPassantTarget = null;
+            }
 
+            // If the piece is a pawn, perform en Passant updates and check for piece
+            // removal.
+            if (movingPiece instanceof Pawn) {
+
+                ((Pawn) movingPiece).moved();
+
+                if (Math.abs(start.getRow() - end.getRow()) == 2) {
+
+                    int middleRow = (start.getRow() + end.getRow()) / 2;
+                    if (isWhiteTurn) {
+                        blackEnPassantTarget = board[middleRow][start.getCol()];
+                    } else {
+                        whiteEnPassantTarget = board[middleRow][start.getCol()];
+                    }
+                }
+
+                if (end.isEmpty() && Math.abs(start.getCol() - end.getCol()) == 1) {
+                    board[start.getRow()][end.getCol()].removePiece();
+                }
+            } else if (movingPiece instanceof King) { // Make the pieces unable to castle in the future.
+                if (Math.abs(start.getCol() - end.getCol()) == 2) {
+                    boolean isLeftSide = start.getCol() > end.getCol();
+                    int rookCol = isLeftSide ? 0 : 7;
+                    int rookEndCol = isLeftSide ? 3 : 5;
+
+                    GameSquare oldRookSquare = this.board[start.getRow()][rookCol];
+                    Rook rook = (Rook) oldRookSquare.getPiece();
+                    GameSquare newRookSquare = this.board[start.getRow()][rookEndCol];
+
+                    newRookSquare.setPiece(rook);
+                    oldRookSquare.removePiece();
+                }
+                ((King) movingPiece).setHasMoved();
+            } else if (movingPiece instanceof Rook) {
+                ((Rook) movingPiece).setHasMoved();
+            }
+
+            // Reset check and update the KingSquare reference if the King is moved.
             if (start.equals(whiteKingSquare)) {
                 start.setInCheck(false);
                 whiteKingSquare = end;
@@ -354,14 +405,23 @@ public class ChessBoard {
                 blackKingSquare = end;
             }
 
+            // Visually and logically update the pieces.
+            end.setPiece(movingPiece);
+            start.removePiece();
+
             // Highlight kings if they are in check
             this.blackKingSquare.setInCheck(isKingInCheck(false));
             this.whiteKingSquare.setInCheck(isKingInCheck(true));
 
             changeTurns();
 
-            if (isCheckmate(isWhiteTurn))
-                System.out.println("Checkmate");
+            if (!hasValidMove(isWhiteTurn)) {
+                if (isKingInCheck(isWhiteTurn)) {
+                    System.out.println("Checkmate");
+                } else {
+                    System.out.println("Stalemate");
+                }
+            }
         }
     }
 }
