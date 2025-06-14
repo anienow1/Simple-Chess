@@ -18,6 +18,10 @@ public abstract class Piece {
 
     public abstract String getName();
 
+    public String getLetter() {
+        return getName().substring(0, 1).toUpperCase();
+    }
+
     public String getColor() {
         return isWhite ? "White" : "Black";
     }

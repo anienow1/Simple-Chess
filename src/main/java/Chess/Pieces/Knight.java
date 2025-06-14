@@ -14,6 +14,11 @@ public class Knight extends Piece {
         return "Knight";
     }
 
+    @Override 
+    public String getLetter() {
+        return "N";
+    }
+
     @Override
     public boolean canMove(ChessBoard aBoard, GameSquare start, GameSquare end) {
         int rowDifference = Math.abs(start.getRow() - end.getRow());

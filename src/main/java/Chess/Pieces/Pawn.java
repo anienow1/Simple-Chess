@@ -26,6 +26,11 @@ public class Pawn extends Piece {
     }
 
     @Override
+    public String getLetter() {
+        return "";
+    }
+
+    @Override
     public boolean canMove(ChessBoard aboard, GameSquare start, GameSquare end) {
         if (start.equals(end)) return false;
         

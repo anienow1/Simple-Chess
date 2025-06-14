@@ -1,6 +1,7 @@
 package Chess;
 
 import java.util.ArrayList;
+import java.util.Stack;
 
 import Chess.Pieces.Bishop;
 import Chess.Pieces.King;
@@ -21,11 +22,16 @@ public class ChessBoard {
 
     // 8 x 8 array representing the board squares
     private GameSquare[][] board = new GameSquare[8][8];
+    private Main mainApp;
+
     // Size of each gride pixel, determining by the window height.
     private final double SQUARE_SIZE;
     private boolean isWhiteTurn = true;
 
     public GameSquare selectedSquare;
+
+    private boolean wait = false;
+    private GameSquare pendingPromotionSquare = null;
 
     // Refrences to the current tiles holding the two kings.
     private GameSquare whiteKingSquare;
@@ -34,12 +40,15 @@ public class ChessBoard {
     private GameSquare whiteEnPassantTarget = null;
     private GameSquare blackEnPassantTarget = null;
 
+    private final Stack<Move> moveHistory = new Stack<>();
+
     /**
      * Constructs the chessboard and initializes all pieces.
      * 
      * @param windowHeight The height of the application window.
      */
-    public ChessBoard(double windowHeight) {
+    public ChessBoard(double windowHeight, Main main) {
+        mainApp = main;
         SQUARE_SIZE = windowHeight / 8;
         initializeNewBoard();
     }
@@ -60,15 +69,14 @@ public class ChessBoard {
                     color = Color.rgb(117, 148, 91); // Dark Square
                 }
 
-             //   if (row == 1 || row == 6) { // Pawns
-               //     board[row][col] = new GameSquare(row, col, new Pawn(row == 1 ? false : true, row, col), this,
-              //              color);
-                 if (row != 0 && row != 7) { // Empty
+                if (row == 1 || row == 6) { // Pawns
+                    board[row][col] = new GameSquare(row, col, new Pawn(row == 1 ? false : true, row, col), this,
+                            color);
+                } else if (row != 0 && row != 7) { // Empty
                     board[row][col] = new GameSquare(row, col, null, this, color);
                 } else {
                     Piece piece;
                     switch (col) {
-                        // case -2, 3 -> {}
                         case (0):
                         case (7):
                             piece = new Rook(row == 7, row, col);
@@ -140,8 +148,12 @@ public class ChessBoard {
     /**
      * Switches the turn between white and black.
      */
-    private void changeTurns() {
+    public void changeTurns() {
         isWhiteTurn = !isWhiteTurn;
+    }
+
+    public Stack<Move> getHistory() {
+        return moveHistory;
     }
 
     /**
@@ -176,6 +188,9 @@ public class ChessBoard {
      * @param square The clicked square.
      */
     public void squareClicked(GameSquare square) { // Remove all markings from all board squares
+        if (wait)
+            return;
+
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
                 this.getBoard()[row][col].isClicked(false);
@@ -231,7 +246,7 @@ public class ChessBoard {
 
         // Save old king square if moving king
         GameSquare oldKingSquare = null;
-        if (aPiece.getName().equals("King")) {
+        if (aPiece instanceof King) {
             oldKingSquare = aPiece.isWhite() ? whiteKingSquare : blackKingSquare;
             if (aPiece.isWhite())
                 whiteKingSquare = end;
@@ -268,7 +283,7 @@ public class ChessBoard {
      * @param isWhite The color of the player. True = white, false = black.
      * @return True if in checkmate, false if not.
      */
-    public boolean hasValidMove(boolean isWhite) {
+    public boolean hasAnyLegalMove(boolean isWhite) {
 
         for (int row = 0; row < 8; row++) {
             for (int col = 0; col < 8; col++) {
@@ -297,6 +312,18 @@ public class ChessBoard {
         return false;
     }
 
+    private void updateKingSquare(Piece piece, GameSquare start, GameSquare end) {
+        if (piece instanceof King) {
+            if (piece.isWhite()) {
+                whiteKingSquare = end;
+                start.setInCheck(false);
+            } else {
+                blackKingSquare = end;
+                start.setInCheck(false);
+            }
+        }
+    }
+    
     /**
      * Searches for and returns all valid moves for the input piece to make on the
      * game board. This method filters out all moves that leave the king in check.
@@ -332,6 +359,37 @@ public class ChessBoard {
         }
     }
 
+    public void finalizePromotion(Piece promotedPiece) {
+        if (pendingPromotionSquare != null) {
+            pendingPromotionSquare.setPiece(promotedPiece);
+            pendingPromotionSquare.isClicked(false);
+        }
+
+        wait = false;
+        pendingPromotionSquare = null;
+
+        boolean blackKingInCheck = isKingInCheck(false);
+        boolean whiteKingInCheck = isKingInCheck(true);
+
+        if (blackKingInCheck || whiteKingInCheck) {
+            moveHistory.peek().setCheck();
+        }
+
+        this.blackKingSquare.setInCheck(blackKingInCheck);
+        this.whiteKingSquare.setInCheck(whiteKingInCheck);
+
+        changeTurns();
+
+        if (!hasAnyLegalMove(isWhiteTurn)) {
+            if (isKingInCheck(isWhiteTurn)) {
+                System.out.println("Checkmate");
+            } else {
+                System.out.println("Stalemate");
+            }
+        }
+    }
+
+
     /**
      * <b> Main method of the board class. </b>
      * <p>
@@ -344,9 +402,12 @@ public class ChessBoard {
      * @param end   The destination square.
      */
     public void makeMove(GameSquare start, GameSquare end) {
-        if (!start.isEmpty() && start.getPiece().canMove(this, start, end)) {
-
+        if (!wait && !start.isEmpty() && start.getPiece().canMove(this, start, end)) {
+            boolean playedAudio = false;
+            boolean castled = false;
+            boolean didEnPassant = false;
             Piece movingPiece = start.getPiece();
+            Piece endPiece = end.getPiece();
 
             if (moveLeavesKingInCheck(movingPiece, start, end)) { // Do not allow the move if it results in self-check
                 return;
@@ -377,7 +438,29 @@ public class ChessBoard {
 
                 if (end.isEmpty() && Math.abs(start.getCol() - end.getCol()) == 1) {
                     board[start.getRow()][end.getCol()].removePiece();
+                    didEnPassant = true;
+                    AudioResources.playAudioOnce(2, playedAudio);
+                    playedAudio = true;
                 }
+
+                if ((isWhiteTurn && end.getRow() == 0) || (!isWhiteTurn && end.getRow() == 7)) {
+                    if (endPiece == null) {
+                        AudioResources.playAudioOnce(1, playedAudio);
+                    } else if (!playedAudio) {
+                        AudioResources.playAudioOnce(2, playedAudio);
+                    }
+
+                    end.setPiece(movingPiece);
+                    start.removePiece();
+                    this.squareClicked(end);
+
+                    wait = true;
+                    pendingPromotionSquare = end;
+                    mainApp.showPromotionChoices(end, isWhiteTurn);
+                    this.moveHistory.push(new Move(start, end, movingPiece, endPiece, true, null, didEnPassant, castled));
+                    return;
+                }
+
             } else if (movingPiece instanceof King) { // Make the pieces unable to castle in the future.
                 if (Math.abs(start.getCol() - end.getCol()) == 2) {
                     boolean isLeftSide = start.getCol() > end.getCol();
@@ -390,38 +473,61 @@ public class ChessBoard {
 
                     newRookSquare.setPiece(rook);
                     oldRookSquare.removePiece();
+
+                    AudioResources.playAudioOnce(4, playedAudio);
+                    playedAudio = true;
+                    castled = true;
                 }
+
+                updateKingSquare(movingPiece, start, end);
+
                 ((King) movingPiece).setHasMoved();
             } else if (movingPiece instanceof Rook) {
                 ((Rook) movingPiece).setHasMoved();
             }
 
-            // Reset check and update the KingSquare reference if the King is moved.
-            if (start.equals(whiteKingSquare)) {
-                start.setInCheck(false);
-                whiteKingSquare = end;
-            } else if (start.equals(blackKingSquare)) {
-                start.setInCheck(false);
-                blackKingSquare = end;
-            }
+            this.moveHistory.push(new Move(start, end, movingPiece, endPiece, false, null, didEnPassant, castled));
+
 
             // Visually and logically update the pieces.
             end.setPiece(movingPiece);
             start.removePiece();
 
+            boolean blackInCheck = isKingInCheck(false);
+            boolean whiteInCheck = isKingInCheck(true);
+
+            if (blackInCheck || whiteInCheck) {
+                moveHistory.peek().setCheck();
+                AudioResources.playAudioOnce(3, playedAudio);
+                playedAudio = true;
+            }
+
+            if (endPiece == null) {
+                AudioResources.playAudioOnce(1, playedAudio);
+            } else if (!playedAudio) {
+                AudioResources.playAudioOnce(2, playedAudio);
+            }
+
             // Highlight kings if they are in check
-            this.blackKingSquare.setInCheck(isKingInCheck(false));
-            this.whiteKingSquare.setInCheck(isKingInCheck(true));
+            this.blackKingSquare.setInCheck(blackInCheck);
+            this.whiteKingSquare.setInCheck(whiteInCheck);
+
 
             changeTurns();
 
-            if (!hasValidMove(isWhiteTurn)) {
+            if (!hasAnyLegalMove(isWhiteTurn)) {
                 if (isKingInCheck(isWhiteTurn)) {
                     System.out.println("Checkmate");
                 } else {
                     System.out.println("Stalemate");
                 }
             }
+            moveHistory.peek().convertToAlgebraicNotation();
         }
+    }
+
+    public void undoMove(){
+        if (moveHistory.isEmpty()) return;
+
     }
 }
